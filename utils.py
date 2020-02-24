@@ -4,10 +4,15 @@ import pandas as pd
 import scipy.stats as st
 
 from node2vec import Node2Vec
-from typing import Tuple
+from typing import Tuple, Dict, List
+from collections import namedtuple
+
+from scipy.stats import ks_2samp
+
+Mean_with_CI = namedtuple('Mean_with_CI', 'mean ci_min ci_max')
 
 
-def get_mean_with_ci(a: np.ndarray, alpha: float = 0.95) -> Tuple[float, Tuple[float, float]]:
+def get_mean_with_ci(a: np.ndarray, alpha: float = 0.95) -> Mean_with_CI:
     """
     Given an array a, function computes the mean of a with confidence intervals
 
@@ -18,7 +23,7 @@ def get_mean_with_ci(a: np.ndarray, alpha: float = 0.95) -> Tuple[float, Tuple[f
     """
     ci_min, ci_max = st.t.interval(alpha, len(a)-1, loc=np.mean(a), scale=st.sem(a))
 
-    return (a.mean(), (ci_min, ci_max))
+    return Mean_with_CI(a.mean(), ci_min, ci_max)
 
 
 def adjacency_matrix_to_train_set(g: nx.Graph, depth: int = 3) -> pd.DataFrame:
@@ -55,6 +60,43 @@ def adjacency_matrix_to_train_set(g: nx.Graph, depth: int = 3) -> pd.DataFrame:
     return dfg
 
 
-if __name__ == '__main__':
+def compare_graphs(g: nx.Graph, graphs: List[nx.Graph]) -> Dict:
+    """
+    Compares a given empirical graph to a set of artificially generated graphs
 
-    pass
+    :param g: input graph
+    :param graphs: list of graphs
+    :returns a dictionary with the results of comparisons
+    """
+    result = {}
+
+    g_degree_distribution = [ d for n,d in nx.degree(g)]
+    degree_distribution_pvals = [
+        ks_2samp(g_degree_distribution, [d for n,d in nx.degree(h)]).pvalue
+        for h in graphs
+    ]
+
+    g_betweenness_distribution = list(nx.betweenness_centrality(g).values())
+    betweenness_distribution_pvals = [
+        ks_2samp(g_betweenness_distribution, list(nx.betweenness_centrality(h).values())).pvalue
+        for h in graphs
+    ]
+
+    g_closeness_distribution = list(nx.closeness_centrality(g).values())
+    closeness_distribution_pvals = [
+        ks_2samp(g_closeness_distribution, list(nx.closeness_centrality(h).values())).pvalue
+        for h in graphs
+    ]
+
+    g_pagerank_distribution = list(nx.pagerank(g).values())
+    pagerank_distribution_pvals = [
+        ks_2samp(g_pagerank_distribution, list(nx.pagerank(h).values())).pvalue
+        for h in graphs
+    ]
+
+    result['degree_distribution_pval'] = get_mean_with_ci(np.array(degree_distribution_pvals))
+    result['betweenness_distribution_pval'] = get_mean_with_ci(np.array(betweenness_distribution_pvals))
+    result['closeness_distribution_pval'] = get_mean_with_ci(np.array(closeness_distribution_pvals))
+    result['pagerank_distribution_pval'] = get_mean_with_ci(np.array(pagerank_distribution_pvals))
+
+    return result

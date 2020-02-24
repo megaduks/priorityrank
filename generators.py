@@ -4,6 +4,8 @@ import networkx as nx
 from collections import Counter
 from typing import List
 
+from utils import compare_graphs
+
 
 def get_ranking(n: int, g: nx.Graph) -> List[int]:
     """
@@ -63,10 +65,12 @@ def generate_network(g: nx.Graph) -> nx.Graph:
 
 if __name__ == '__main__':
 
-    g = nx.erdos_renyi_graph(n=20, p=0.1)
+    g = nx.erdos_renyi_graph(n=120, p=0.1)
 
-    print(g.degree)
+    graphs = []
 
     for i in range(10):
-        result = generate_network(g)
-        print(result.degree)
+        graphs.append(generate_network(g))
+
+    for k,v in compare_graphs(g, graphs).items():
+        print(k, v)
