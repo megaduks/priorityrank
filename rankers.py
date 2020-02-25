@@ -1,10 +1,8 @@
 import numpy as np
 import networkx as nx
-import torch
 
 from node2vec import Node2Vec
 from typing import List
-from torchnca import NCA
 
 from utils import cosine_similarity
 
@@ -55,3 +53,19 @@ class EmbeddingRanker(Ranker):
             reverse=True)
 
         return ranking
+
+
+class DegreeRanker(Ranker):
+    """
+    Implements ranking based on the preferential attachment principle
+    """
+    def __init__(self, g: nx.Graph):
+
+        degree = lambda x: g.degree[x]
+
+        super().__init__(g)
+        self.ranking = sorted(g.nodes, key=degree, reverse=True)
+
+    def get_ranking(self, n: int) -> List[int]:
+
+        return self.ranking

@@ -4,7 +4,7 @@ import numpy as np
 from typing import List
 from collections import Counter
 
-from rankers import RandomRanker, EmbeddingRanker
+from rankers import RandomRanker, EmbeddingRanker, DegreeRanker
 from utils import compare_graphs
 
 
@@ -64,7 +64,7 @@ if __name__ == '__main__':
     graphs = []
 
     g = nx.erdos_renyi_graph(n=100, p=0.05)
-    pr = PriorityRank(g, EmbeddingRanker)
+    pr = PriorityRank(g, DegreeRanker)
 
     for i in range(num_tries):
         graphs.append(pr.generate())
