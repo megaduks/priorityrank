@@ -70,8 +70,6 @@ if __name__ == '__main__':
     graphs = []
 
     g = nx.barabasi_albert_graph(n=100, m=2)
-    # g = nx.karate_club_graph()
-    # g = nx.watts_strogatz_graph(n=100, k=2, p=0.02)
 
     pr = PriorityRank(g, MLRanker)
 
