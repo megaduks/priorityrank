@@ -8,8 +8,21 @@ from typing import Tuple, Dict, List
 from collections import namedtuple
 
 from scipy.stats import ks_2samp
+from numpy.linalg import norm
 
 Mean_with_CI = namedtuple('Mean_with_CI', 'mean ci_min ci_max')
+
+
+def cosine_similarity(a: np.ndarray, b: np.ndarray):
+    """
+    Computes cosine similarity between two NumPy arrays
+
+    :param a: first input array
+    :param b: second input array
+
+    :returns cosine distance between a and b
+    """
+    return np.dot(a, b) / (norm(a) * norm(b))
 
 
 def get_mean_with_ci(a: np.ndarray, alpha: float = 0.95) -> Mean_with_CI:

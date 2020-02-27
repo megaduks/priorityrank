@@ -4,8 +4,23 @@ import numpy as np
 from typing import List
 from collections import Counter
 
-from rankers import RandomRanker, EmbeddingRanker, DegreeRanker
+from rankers import RandomRanker, EmbeddingRanker, DegreeRanker, MLRanker
 from utils import compare_graphs
+
+from tqdm import tqdm
+
+
+def get_rank_probabilities(n: int) -> List[float]:
+    """
+    Generates the list of probabilities for a given length of ranking
+
+    :param n: length of the ranking
+    :returns a list of diminishing probabilities
+    """
+    alpha = 3.5
+    ranks = [1 / i**alpha for i in range(1, n + 1)]
+
+    return [r / sum(ranks) for r in ranks]
 
 
 class PriorityRank:
@@ -15,17 +30,6 @@ class PriorityRank:
     def __init__(self, graph: nx.Graph, ranker: object):
         self.graph = graph
         self.ranker = ranker(graph)
-
-    def get_rank_probabilities(self, n: int) -> List[float]:
-        """
-        Generates the list of probabilities for a given length of ranking
-
-        :param n: length of the ranking
-        :returns a list of diminishing probabilities
-        """
-        ranks = [1 / i for i in range(1, n + 1)]
-
-        return [r / sum(ranks) for r in ranks]
 
     def generate(self):
         """
@@ -46,28 +50,35 @@ class PriorityRank:
         degree_probs = [c / sum(cnt) for c in cnt]
 
         for i in range(num_nodes):
-            num_edges = np.random.choice(a=deg, p=degree_probs)
-            ranking = self.ranker.get_ranking(i)
-            probs = self.get_rank_probabilities(len(ranking))
-            target_nodes = np.random.choice(a=ranking, p=probs, size=num_edges, replace=False)
+            num_edges = np.random.choice(a=deg, p=degree_probs) - g.degree[i]
 
-            for j in target_nodes:
-                g.add_edge(i, j)
+            if num_edges > 0:
+                ranking = self.ranker.get_ranking(i)
+                probs = get_rank_probabilities(len(ranking))
+                target_nodes = np.random.choice(a=ranking, p=probs, size=num_edges, replace=False)
+
+                for j in target_nodes:
+                    g.add_edge(i, j)
 
         return g
 
 
 if __name__ == '__main__':
 
-    num_tries = 10
+    num_experiments = 50
 
     graphs = []
 
-    g = nx.erdos_renyi_graph(n=100, p=0.05)
-    pr = PriorityRank(g, DegreeRanker)
+    g = nx.barabasi_albert_graph(n=100, m=2)
+    # g = nx.karate_club_graph()
+    # g = nx.watts_strogatz_graph(n=100, k=2, p=0.02)
 
-    for i in range(num_tries):
+    pr = PriorityRank(g, MLRanker)
+
+    for i in tqdm(range(num_experiments)):
         graphs.append(pr.generate())
+
+    print()
 
     for k,v in compare_graphs(g, graphs).items():
         print(k, v)

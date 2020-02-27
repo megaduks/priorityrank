@@ -4,7 +4,11 @@ import networkx as nx
 from node2vec import Node2Vec
 from typing import List
 
-from utils import cosine_similarity
+from keras.models import Sequential
+from keras.layers import Dense, Activation, Dropout
+from keras.optimizers import SGD
+
+from utils import cosine_similarity, adjacency_matrix_to_train_set
 
 
 class Ranker:
@@ -60,12 +64,56 @@ class DegreeRanker(Ranker):
     Implements ranking based on the preferential attachment principle
     """
     def __init__(self, g: nx.Graph):
-
-        degree = lambda x: g.degree[x]
-
         super().__init__(g)
-        self.ranking = sorted(g.nodes, key=degree, reverse=True)
+        self.ranking = sorted(g.nodes, key=lambda x: g.degree[x], reverse=True)
 
     def get_ranking(self, n: int) -> List[int]:
 
         return self.ranking
+
+
+class MLRanker(Ranker):
+    """
+    Implements ML approach to node ranking generation
+    """
+    def __init__(self, g):
+        super().__init__(g)
+
+        df = adjacency_matrix_to_train_set(g, depth=3)
+        X = df[['emb_x','emb_y']].values
+        y = df[['val']]
+
+        _X = [ np.concatenate([a,b]) for a,b in X ]
+        X_train = np.array(_X)
+
+        model = Sequential()
+        model.add(Dense(16, activation='relu', input_dim=256))
+        model.add(Dropout(0.5))
+        model.add(Dense(8, activation='relu'))
+        model.add(Dropout(0.5))
+        model.add(Dense(1, activation='relu'))
+
+        sgd = SGD(lr=0.001, decay=1e-6, momentum=0.75, nesterov=True)
+
+        model.compile(loss='mean_squared_error',
+                      optimizer=sgd,
+                      metrics=['mean_squared_error'])
+
+        model.fit(X_train, y, epochs=200, batch_size=8)
+
+        self.df = df
+        self.model = model
+
+    def get_ranking(self, n: int) -> List[int]:
+
+        n_idx = self.df.x == n
+        X = self.df[n_idx][['emb_x','emb_y']].values
+        y = self.df[n_idx]['y']
+        _X = [ np.concatenate([a,b]) for a,b in X ]
+        X_test = np.array(_X)
+
+        y_pred = self.model.predict(X_test).tolist()
+
+        ranking = [ int(n) for n,v in sorted(zip(y, y_pred), key=lambda x: x[1], reverse=True)]
+
+        return ranking
