@@ -52,7 +52,20 @@ def adjacency_matrix_to_train_set(g: nx.Graph, depth: int = 3, alpha: float = 2.
 
     result = []
 
-    model = Node2Vec(g).fit()
+    feed_dict = {
+        'dimensions': 128,
+        'walk_length': 5,
+        'num_walks': 500,
+        'workers': 4
+    }
+
+    fit_dict = {
+        'window': 5,
+        'min_count': 1,
+        'batch_words': 10
+    }
+
+    model = Node2Vec(g, **feed_dict).fit(**fit_dict)
 
     A = nx.adjacency_matrix(g).todense()
     AA = A
