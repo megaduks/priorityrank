@@ -1,6 +1,6 @@
 import networkx as nx
 import numpy as np
-
+import os, dotenv
 import neptune
 
 from typing import List
@@ -68,16 +68,16 @@ class PriorityRank:
 
 if __name__ == '__main__':
 
+    project_dir = os.path.join(os.path.dirname(__file__), os.pardir)
+    dotenv_path = os.path.join(project_dir, '.env')
+    dotenv.load_dotenv(dotenv_path)
+
     PARAMS = {
         'n_experiments': 50,
         'graph_size': [50, 100, 250]
     }
 
-    API_KEY =   'eyJhcGlfYWRkcmVzcyI6Imh0dHBzOi8vdWkubmVwdHVuZS5haSIsImFwaV91cmwiOiJod' \
-                'HRwczovL3VpLm5lcHR1bmUuYWkiLCJhcGlfa2V5Ijoi'\
-                'OTM3MzZkNjMtNzQ4OC00OTNhLTk3OGQtNjI3NDE3ODYxYjQ4In0='
-
-    neptune.init('megaduks/sandbox', api_token=API_KEY)
+    neptune.init(dotenv['NEPTUNE_PROJECT'], api_token=dotenv['NEPTUNE_API_KEY'])
 
     with neptune.create_experiment(name='priorityrank-barabasi', params=PARAMS):
 
