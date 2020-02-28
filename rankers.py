@@ -99,7 +99,7 @@ class MLRanker(Ranker):
                       optimizer=sgd,
                       metrics=['mean_squared_error'])
 
-        model.fit(X_train, y, epochs=200, batch_size=8)
+        model.fit(X_train, y, epochs=20, batch_size=8)
 
         self.df = df
         self.model = model

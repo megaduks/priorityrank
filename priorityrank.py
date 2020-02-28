@@ -1,6 +1,8 @@
 import networkx as nx
 import numpy as np
 
+import neptune
+
 from typing import List
 from collections import Counter
 
@@ -55,7 +57,7 @@ class PriorityRank:
 
             if num_edges > 0:
                 ranking = self.ranker.get_ranking(i)
-                probs = get_rank_probabilities(len(ranking))
+                probs = get_rank_probabilities(len(ranking), alpha=2.5)
                 target_nodes = np.random.choice(a=ranking, p=probs, size=num_edges, replace=False)
 
                 for j in target_nodes:
@@ -66,18 +68,32 @@ class PriorityRank:
 
 if __name__ == '__main__':
 
-    num_experiments = 50
+    PARAMS = {
+        'n_experiments': 50,
+        'graph_size': [50, 100, 250]
+    }
 
-    graphs = []
+    API_KEY =   'eyJhcGlfYWRkcmVzcyI6Imh0dHBzOi8vdWkubmVwdHVuZS5haSIsImFwaV91cmwiOiJod' \
+                'HRwczovL3VpLm5lcHR1bmUuYWkiLCJhcGlfa2V5Ijoi'\
+                'OTM3MzZkNjMtNzQ4OC00OTNhLTk3OGQtNjI3NDE3ODYxYjQ4In0='
 
-    g = nx.barabasi_albert_graph(n=100, m=2)
+    neptune.init('megaduks/sandbox', api_token=API_KEY)
 
-    pr = PriorityRank(g, MLRanker)
+    with neptune.create_experiment(name='priorityrank-barabasi', params=PARAMS):
 
-    for i in tqdm(range(num_experiments)):
-        graphs.append(pr.generate())
+        for g_size in PARAMS['graph_size']:
 
-    print()
+            graphs = []
 
-    for k,v in compare_graphs(g, graphs).items():
-        print(k, v)
+            g = nx.barabasi_albert_graph(n=g_size, m=2)
+
+            pr = PriorityRank(g, MLRanker)
+
+            for i in tqdm(range(PARAMS['n_experiments'])):
+                graphs.append(pr.generate())
+
+            print()
+
+            for k,v in compare_graphs(g, graphs).items():
+                print(k, v)
+                neptune.log_metric(k,v)
