@@ -39,17 +39,17 @@ def get_mean_with_ci(a: np.ndarray, alpha: float = 0.95) -> Mean_with_CI:
     return Mean_with_CI(a.mean(), ci_min, ci_max)
 
 
-def adjacency_matrix_to_train_set(g: nx.Graph, depth: int = 3) -> pd.DataFrame:
+def adjacency_matrix_to_train_set(g: nx.Graph, depth: int = 3, alpha: float = 2.5) -> pd.DataFrame:
     """
     Transforms adjacency matrix of a graph into a training set for ML model
 
     :param g: input graph
     :param depth: max length of paths considered when generating training set
+    :param alpha: attenuation parameter for setting the weight of long paths
 
     :return dataframe with nodes, their embeddings, and their similarity
     """
 
-    alpha = 10
     result = []
 
     model = Node2Vec(g).fit()
@@ -60,7 +60,7 @@ def adjacency_matrix_to_train_set(g: nx.Graph, depth: int = 3) -> pd.DataFrame:
     for i in range(depth):
 
         for (x,y), val in np.ndenumerate(AA):
-            result.append((x, y, val*(1/alpha**(i))))
+            result.append((x, y, val*(1/(alpha**i))))
 
         AA = AA @ A
 
