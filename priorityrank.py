@@ -96,4 +96,6 @@ if __name__ == '__main__':
 
             for k,v in compare_graphs(g, graphs).items():
                 print(k, v)
-                neptune.log_metric(k,v)
+                neptune.log_metric(k + 'mean', v.mean)
+                neptune.log_metric(k + 'ci_min', v.ci_min)
+                neptune.log_metric(k + 'ci_max', v.ci_max)
