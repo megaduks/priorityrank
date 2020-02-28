@@ -10,14 +10,15 @@ from utils import compare_graphs
 from tqdm import tqdm
 
 
-def get_rank_probabilities(n: int) -> List[float]:
+def get_rank_probabilities(n: int, alpha: float = 1.5) -> List[float]:
     """
     Generates the list of probabilities for a given length of ranking
 
     :param n: length of the ranking
+    :param alpha: attenuation parameter for changing probabilities of positions in the ranking
+
     :returns a list of diminishing probabilities
     """
-    alpha = 3.5
     ranks = [1 / i**alpha for i in range(1, n + 1)]
 
     return [r / sum(ranks) for r in ranks]
