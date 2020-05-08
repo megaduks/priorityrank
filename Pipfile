@@ -17,6 +17,7 @@ keras = "*"
 autopep8 = "*"
 tensorflow = "*"
 matplotlib = "*"
+neptune-client = "*"
 
 [requires]
 python_version = "3.7"

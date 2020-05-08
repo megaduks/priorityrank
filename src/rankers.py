@@ -5,10 +5,10 @@ from node2vec import Node2Vec
 from typing import List
 
 from keras.models import Sequential
-from keras.layers import Dense, Activation, Dropout
+from keras.layers import Dense, Dropout
 from keras.optimizers import SGD
 
-from utils import cosine_similarity, adjacency_matrix_to_train_set
+from src.utils import cosine_similarity, adjacency_matrix_to_train_set
 
 
 class Ranker:
@@ -87,19 +87,23 @@ class MLRanker(Ranker):
         X_train = np.array(_X)
 
         model = Sequential()
-        model.add(Dense(16, activation='relu', input_dim=256))
+        model.add(Dense(64, activation='relu', input_dim=256))
         model.add(Dropout(0.5))
-        model.add(Dense(8, activation='relu'))
+        model.add(Dense(32, activation='relu'))
+        model.add(Dropout(0.5))
+        model.add(Dense(16, activation='relu'))
+        model.add(Dropout(0.5))
+        model.add(Dense(4, activation='relu'))
         model.add(Dropout(0.5))
         model.add(Dense(1, activation='relu'))
 
-        sgd = SGD(lr=0.001, decay=1e-6, momentum=0.75, nesterov=True)
+        sgd = SGD(lr=0.001, decay=1e-6, momentum=0.5, nesterov=True)
 
         model.compile(loss='mean_squared_error',
                       optimizer=sgd,
                       metrics=['mean_squared_error'])
 
-        model.fit(X_train, y, epochs=20, batch_size=8)
+        model.fit(X_train, y, epochs=500, batch_size=8)
 
         self.df = df
         self.model = model

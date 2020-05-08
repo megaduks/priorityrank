@@ -6,8 +6,8 @@ import neptune
 from typing import List
 from collections import Counter
 
-from rankers import RandomRanker, EmbeddingRanker, DegreeRanker, MLRanker
-from utils import compare_graphs
+from src.rankers import MLRanker
+from src.utils import compare_graphs
 
 from tqdm import tqdm
 
@@ -74,13 +74,13 @@ if __name__ == '__main__':
 
     PARAMS = {
         'n_experiments': 50,
-        'graph_size': [50, 100, 250]
+        'graph_size': [25, 50, 100]
     }
 
-    neptune.init(dotenv['NEPTUNE_PROJECT'], api_token=dotenv['NEPTUNE_API_KEY'])
+    neptune.init(os.getenv('NEPTUNE_PROJECT'), api_token=os.getenv('NEPTUNE_API_KEY'))
 
     with neptune.create_experiment(name='priorityrank-barabasi', params=PARAMS):
-
+    
         for g_size in PARAMS['graph_size']:
 
             graphs = []
